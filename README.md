@@ -24,13 +24,11 @@ pipeline. It implements:
 
 The resource scripts quantify **structural, hardware-targeted compilation cost**
 under the fixed transpilation setting. They do not estimate live-device runtime,
-fidelity, energy, or the minimum circuit cost attainable through
-checkpoint-specific parameter binding and algebraic simplification.
+fidelity, or energy.
 
-The original lab execution environment is not present in this repository. This
-release therefore documents and tests the manuscript protocol as a reference
-implementation; it does not claim line-for-line identity with an unavailable
-private lab checkout.
+This source-only release documents the manuscript protocol as a tested reference
+implementation. Fixed controls are exposed in `configs/paper.json` and covered
+by conformance tests.
 
 ## Installation
 
@@ -81,4 +79,3 @@ dataset caches. Run `python scripts/audit_release.py` before every push.
 ## License
 
 MIT License. See [LICENSE](LICENSE).
-
