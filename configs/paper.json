@@ -1,0 +1,43 @@
+{
+  "protocol": "csonet2026-qde-qnn-v1",
+  "datasets": {
+    "mnist": {"class_0": "zero", "class_1": "one"},
+    "cifar10": {"class_0": "airplane", "class_1": "automobile"}
+  },
+  "sample_size": 5000,
+  "train_size": 3000,
+  "validation_size": 1000,
+  "test_size": 1000,
+  "split_seeds": [1234, 1235, 1236],
+  "pca_components": 16,
+  "qnn_layers": 2,
+  "epochs": 10,
+  "batch_size": 16,
+  "shots": 1024,
+  "spsa_a": 0.2,
+  "spsa_c": 0.1,
+  "initialization_seed": 1234,
+  "initialization_std": 0.05,
+  "classification_threshold": 0.5,
+  "transpiler_seed": 1234,
+  "transpiler_optimization_level": 3,
+  "native_gates": ["ecr", "id", "rz", "sx", "x"],
+  "mps_min_width": 32,
+  "mps_bond_dimension": 1024,
+  "mps_truncation_threshold": 1e-16,
+  "resource_inputs_per_dataset_split": 20,
+  "encodings": [
+    "binary",
+    "integer",
+    "one_hot",
+    "amplitude_histogram",
+    "amplitude_mottonen",
+    "amplitude_sparse",
+    "angle",
+    "dense_angle",
+    "reupload_angle",
+    "iqp",
+    "hamiltonian",
+    "trainable_kernel"
+  ]
+}

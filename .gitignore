@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+.DS_Store
+
+# Experimental artifacts must never be committed to the public source-only repo.
+outputs/
+results/
+artifacts/
+checkpoints/
+data/
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.npz
+*.npy
+*.pkl
+*.pickle
+*.joblib
+*.qpy
+*.log
+
