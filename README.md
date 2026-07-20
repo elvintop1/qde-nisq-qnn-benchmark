@@ -71,11 +71,6 @@ Full noisy training is computationally expensive. In particular, the 32- and
 64-qubit basis configurations use matrix-product-state simulation, while widths
 up to 16 use statevector simulation.
 
-## Repository policy
-
-Do not commit generated CSV files, metrics, plots, logs, trained parameters, or
-dataset caches. Run `python scripts/audit_release.py` before every push.
-
 ## License
 
 MIT License. See [LICENSE](LICENSE).
