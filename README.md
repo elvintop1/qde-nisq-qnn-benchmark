@@ -26,6 +26,11 @@ The resource scripts quantify **structural, hardware-targeted compilation cost**
 under the fixed transpilation setting. They do not estimate live-device runtime,
 fidelity, or energy.
 
+This repository is a reference implementation of the manuscript protocol, not
+an archival copy of the original experiment code. Exact compiled depth and ECR
+counts may therefore differ from the reported values because state-preparation
+synthesis and transpiler decomposition details can change the generated circuit.
+
 This source-only release documents the manuscript protocol as a tested reference
 implementation. Fixed controls are exposed in `configs/paper.json` and covered
 by conformance tests.
