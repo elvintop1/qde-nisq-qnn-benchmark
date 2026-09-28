@@ -30,9 +30,9 @@ def build_encoding(name: str, x: np.ndarray) -> EncodingCircuit:
         "binary": _binary,
         "integer": _integer,
         "one_hot": _one_hot,
-        "amplitude_histogram": _amplitude,
-        "amplitude_mottonen": _amplitude,
-        "amplitude_sparse": _amplitude,
+        "amplitude_histogram": _amplitude_histogram,
+        "amplitude_mottonen": _amplitude_mottonen,
+        "amplitude_sparse": _amplitude_sparse,
         "angle": _angle,
         "dense_angle": _dense_angle,
         "reupload_angle": _reupload,
@@ -81,7 +81,23 @@ def _one_hot(name: str, x: np.ndarray) -> EncodingCircuit:
     return EncodingCircuit(name, circuit, ())
 
 
-def _amplitude(name: str, x: np.ndarray) -> EncodingCircuit:
+def _amplitude_histogram(name: str, x: np.ndarray) -> EncodingCircuit:
+    """Load amplitudes produced by histogram preprocessing."""
+    return _amplitude_state_preparation(name, x)
+
+
+def _amplitude_mottonen(name: str, x: np.ndarray) -> EncodingCircuit:
+    """Load the normalized dense vector used by the Möttönen configuration."""
+    return _amplitude_state_preparation(name, x)
+
+
+def _amplitude_sparse(name: str, x: np.ndarray) -> EncodingCircuit:
+    """Load amplitudes produced by top-k sparse preprocessing."""
+    return _amplitude_state_preparation(name, x)
+
+
+def _amplitude_state_preparation(name: str, x: np.ndarray) -> EncodingCircuit:
+    """Shared circuit stage; the three amplitude variants differ before this point."""
     width = int(math.log2(len(x)))
     circuit = QuantumCircuit(width, name=name)
     circuit.append(StatePreparation(np.asarray(x, dtype=complex), normalize=True), circuit.qubits)
@@ -157,4 +173,3 @@ def _append_all_pairs(circuit: QuantumCircuit, x: np.ndarray, *, scale: float) -
             circuit.cx(left, right)
             circuit.rz(scale * float(x[left] * x[right]), right)
             circuit.cx(left, right)
-

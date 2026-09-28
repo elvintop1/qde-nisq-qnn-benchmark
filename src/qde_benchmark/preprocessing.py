@@ -75,8 +75,12 @@ def prepare_encoding_data(split: DataSplit, encoding: str) -> DataSplit:
         transformed = _fit_minmax(matrices, (0.0, np.pi))
     elif encoding in DISCRETE_ENCODINGS:
         transformed = _fit_minmax(matrices, (0.0, 1.0))
-    elif encoding in AMPLITUDE_ENCODINGS:
-        transformed = tuple(_prepare_amplitude(matrix, encoding) for matrix in matrices)
+    elif encoding == "amplitude_histogram":
+        transformed = tuple(_prepare_histogram_amplitudes(matrix) for matrix in matrices)
+    elif encoding == "amplitude_mottonen":
+        transformed = tuple(_prepare_mottonen_amplitudes(matrix) for matrix in matrices)
+    elif encoding == "amplitude_sparse":
+        transformed = tuple(_prepare_sparse_amplitudes(matrix) for matrix in matrices)
     else:
         raise KeyError(f"Unknown encoding: {encoding}")
     return DataSplit(
@@ -97,18 +101,34 @@ def _fit_minmax(
     return scaler.fit_transform(matrices[0]), scaler.transform(matrices[1]), scaler.transform(matrices[2])
 
 
-def _prepare_amplitude(matrix: np.ndarray, encoding: str) -> np.ndarray:
+def _prepare_histogram_amplitudes(matrix: np.ndarray) -> np.ndarray:
+    """Encode absolute PCA mass as square roots of histogram probabilities."""
     values = np.asarray(matrix, dtype=float).copy()
-    if encoding == "amplitude_histogram":
-        values = np.abs(values)
-        values /= np.maximum(values.sum(axis=1, keepdims=True), 1e-12)
-        values = np.sqrt(values)
-    elif encoding == "amplitude_sparse":
-        keep = min(4, values.shape[1])
-        indices = np.argpartition(np.abs(values), -keep, axis=1)[:, -keep:]
-        mask = np.zeros_like(values, dtype=bool)
-        mask[np.arange(len(values))[:, None], indices] = True
-        values[~mask] = 0.0
-    norms = np.linalg.norm(values, axis=1, keepdims=True)
-    return values / np.where(norms == 0.0, 1.0, norms)
+    probabilities = np.abs(values)
+    totals = probabilities.sum(axis=1, keepdims=True)
+    if np.any(totals <= 1e-15):
+        raise ValueError("Histogram amplitude encoding received an all-zero row.")
+    return np.sqrt(probabilities / totals)
 
+
+def _prepare_mottonen_amplitudes(matrix: np.ndarray) -> np.ndarray:
+    """Keep every signed PCA component and L2-normalize the dense vector."""
+    return _normalize_amplitude_rows(np.asarray(matrix, dtype=float).copy())
+
+
+def _prepare_sparse_amplitudes(matrix: np.ndarray, *, keep: int = 4) -> np.ndarray:
+    """Keep the top-k absolute PCA components, then L2-normalize the sparse vector."""
+    values = np.asarray(matrix, dtype=float).copy()
+    retained = min(int(keep), values.shape[1])
+    indices = np.argpartition(np.abs(values), -retained, axis=1)[:, -retained:]
+    mask = np.zeros_like(values, dtype=bool)
+    mask[np.arange(len(values))[:, None], indices] = True
+    values[~mask] = 0.0
+    return _normalize_amplitude_rows(values)
+
+
+def _normalize_amplitude_rows(values: np.ndarray) -> np.ndarray:
+    norms = np.linalg.norm(values, axis=1, keepdims=True)
+    if np.any(norms <= 1e-15):
+        raise ValueError("Amplitude encoding received an all-zero row.")
+    return values / norms
