@@ -71,23 +71,6 @@ Full noisy training is computationally expensive. In particular, the 32- and
 64-qubit basis configurations use matrix-product-state simulation, while widths
 up to 16 use statevector simulation.
 
-## The three amplitude configurations
-
-The three amplitude configurations differ in preprocessing, not in the final
-four-qubit state-loading primitive:
-
-- `amplitude_histogram` takes the absolute PCA components as histogram mass and
-  encodes the square roots of the resulting probabilities;
-- `amplitude_mottonen` keeps all signed PCA components and L2-normalizes the
-  dense vector; and
-- `amplitude_sparse` keeps only the four largest-magnitude PCA components and
-  L2-normalizes the resulting sparse vector.
-
-After those distinct transformations, all three configurations use the same
-Qiskit `StatePreparation` circuit stage. This is intentional: it keeps the
-circuit construction and its resource accounting comparable while isolating
-the effect of the three data transformations.
-
 ## License
 
 MIT License. See [LICENSE](LICENSE).
