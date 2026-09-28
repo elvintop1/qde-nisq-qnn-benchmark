@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter, ParameterVector
-from qiskit.circuit.library import StatePreparation
+from qiskit.circuit.library import StatePreparation, UCRYGate
 
 from .protocol import ENCODER_PARAMETER_COUNTS, ENCODER_WIDTHS, PAPER_ENCODINGS
 
@@ -87,8 +87,23 @@ def _amplitude_histogram(name: str, x: np.ndarray) -> EncodingCircuit:
 
 
 def _amplitude_mottonen(name: str, x: np.ndarray) -> EncodingCircuit:
-    """Load the normalized dense vector used by the Möttönen configuration."""
-    return _amplitude_state_preparation(name, x)
+    """Prepare a normalized real vector with Möttönen uniformly controlled rotations."""
+    amplitudes = np.asarray(x, dtype=float)
+    norm = float(np.linalg.norm(amplitudes))
+    if norm <= 1e-15:
+        raise ValueError("Möttönen state preparation is undefined for an all-zero vector.")
+    amplitudes = amplitudes / norm
+
+    width = int(math.log2(len(amplitudes)))
+    circuit = QuantumCircuit(width, name=name)
+    for target in reversed(range(width)):
+        angles = _mottonen_y_angles(amplitudes, target)
+        controls = list(range(target + 1, width))
+        if controls:
+            circuit.append(UCRYGate(angles), [target, *controls])
+        else:
+            circuit.ry(angles[0], target)
+    return EncodingCircuit(name, circuit, ())
 
 
 def _amplitude_sparse(name: str, x: np.ndarray) -> EncodingCircuit:
@@ -97,11 +112,27 @@ def _amplitude_sparse(name: str, x: np.ndarray) -> EncodingCircuit:
 
 
 def _amplitude_state_preparation(name: str, x: np.ndarray) -> EncodingCircuit:
-    """Shared circuit stage; the three amplitude variants differ before this point."""
+    """State-preparation stage shared by the histogram and sparse variants."""
     width = int(math.log2(len(x)))
     circuit = QuantumCircuit(width, name=name)
     circuit.append(StatePreparation(np.asarray(x, dtype=complex), normalize=True), circuit.qubits)
     return EncodingCircuit(name, circuit, ())
+
+
+def _mottonen_y_angles(amplitudes: np.ndarray, target: int) -> list[float]:
+    """Return the uniformly controlled RY angles for one Möttönen cascade level."""
+    block_size = 1 << (target + 1)
+    half = 1 << target
+    angles: list[float] = []
+    for start in range(0, len(amplitudes), block_size):
+        block = amplitudes[start : start + block_size]
+        if target == 0:
+            angles.append(2.0 * math.atan2(float(block[1]), float(block[0])))
+            continue
+        zero_norm = float(np.linalg.norm(block[:half]))
+        one_norm = float(np.linalg.norm(block[half:]))
+        angles.append(2.0 * math.atan2(one_norm, zero_norm))
+    return angles
 
 
 def _angle(name: str, x: np.ndarray) -> EncodingCircuit:

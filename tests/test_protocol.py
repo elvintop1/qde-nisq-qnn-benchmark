@@ -36,14 +36,17 @@ def test_all_encoding_widths_and_parameter_counts() -> None:
         assert len(model.parameters) == ENCODER_PARAMETER_COUNTS[name] + 4 * ENCODER_WIDTHS[name]
 
 
-def test_amplitude_variants_share_the_same_circuit_loader() -> None:
+def test_amplitude_variants_use_the_documented_circuit_loaders() -> None:
     x = np.linspace(0.05, 0.95, 16)
     x /= np.linalg.norm(x)
-    names = ("amplitude_histogram", "amplitude_mottonen", "amplitude_sparse")
 
-    for name in names:
-        encoding = build_encoding(name, x)
-        assert encoding.circuit.count_ops() == {"state_preparation": 1}
+    histogram = build_encoding("amplitude_histogram", x).circuit
+    mottonen = build_encoding("amplitude_mottonen", x).circuit
+    sparse = build_encoding("amplitude_sparse", x).circuit
+
+    assert histogram.count_ops() == {"state_preparation": 1}
+    assert mottonen.count_ops() == {"ucry": 3, "ry": 1}
+    assert sparse.count_ops() == {"state_preparation": 1}
 
 
 def test_binary_decoder_is_least_significant_bit_marginal() -> None:
