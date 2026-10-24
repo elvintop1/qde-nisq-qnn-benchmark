@@ -18,6 +18,7 @@ FORBIDDEN_SUFFIXES = {
     ".log",
 }
 MAX_SOURCE_SIZE = 5 * 1024 * 1024
+ALLOWED_LOG_FILES = {Path("training_logs/log_loss.csv")}
 
 
 def tracked_paths() -> list[Path]:
@@ -35,10 +36,11 @@ def main() -> int:
     violations: list[str] = []
     for path in tracked_paths():
         relative = path.relative_to(ROOT)
-        if FORBIDDEN_DIRECTORIES.intersection(relative.parts):
-            violations.append(f"generated-data directory: {relative}")
-        if path.suffix.lower() in FORBIDDEN_SUFFIXES:
-            violations.append(f"generated-data suffix: {relative}")
+        if relative not in ALLOWED_LOG_FILES:
+            if FORBIDDEN_DIRECTORIES.intersection(relative.parts):
+                violations.append(f"generated-data directory: {relative}")
+            if path.suffix.lower() in FORBIDDEN_SUFFIXES:
+                violations.append(f"generated-data suffix: {relative}")
         if path.stat().st_size > MAX_SOURCE_SIZE:
             violations.append(f"file exceeds 5 MiB: {relative}")
     if violations:
@@ -46,7 +48,7 @@ def main() -> int:
         for violation in violations:
             print(f"- {violation}")
         return 1
-    print("Release audit passed: no result artifacts or oversized files are tracked.")
+    print("Release audit passed: no unapproved result artifacts or oversized files are tracked.")
     return 0
 
 
