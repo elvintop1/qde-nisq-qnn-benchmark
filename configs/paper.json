@@ -13,6 +13,7 @@
   "qnn_layers": 2,
   "epochs": 10,
   "batch_size": 16,
+  "drop_last": true,
   "shots": 1024,
   "spsa_a": 0.2,
   "spsa_c": 0.1,

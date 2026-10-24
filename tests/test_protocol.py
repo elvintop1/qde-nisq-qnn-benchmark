@@ -18,6 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_paper_configuration_and_capacity_rules() -> None:
     config = PaperConfig.load(ROOT / "configs" / "paper.json")
     assert config.encodings == PAPER_ENCODINGS
+    assert config.drop_last is True
+    assert config.train_size // config.batch_size == 187
     assert config.simulator_method(16) == "statevector"
     assert config.simulator_method(32) == "matrix_product_state"
     assert config.simulator_method(64) == "matrix_product_state"

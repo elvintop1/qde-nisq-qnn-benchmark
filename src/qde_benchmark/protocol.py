@@ -55,6 +55,7 @@ class PaperConfig:
     qnn_layers: int
     epochs: int
     batch_size: int
+    drop_last: bool
     shots: int
     spsa_a: float
     spsa_c: float
@@ -90,6 +91,12 @@ class PaperConfig:
             raise ValueError("The paper uses split seeds 1234, 1235, and 1236.")
         if self.qnn_layers != 2 or self.shots != 1024:
             raise ValueError("The paper uses two QNN layers and 1024 shots.")
+        if self.batch_size <= 0:
+            raise ValueError("batch_size must be positive.")
+        if not isinstance(self.drop_last, bool):
+            raise ValueError("drop_last must be a boolean.")
+        if self.drop_last and self.train_size < self.batch_size:
+            raise ValueError("drop_last requires at least one complete training batch.")
 
     def qnn_parameter_count(self, width: int) -> int:
         return 2 * self.qnn_layers * int(width)

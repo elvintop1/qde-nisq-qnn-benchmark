@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import numpy as np
@@ -26,8 +27,23 @@ def binary_cross_entropy(labels: np.ndarray, probabilities: np.ndarray) -> float
     return float(-np.mean(y * np.log(clipped) + (1.0 - y) * np.log(1.0 - clipped)))
 
 
+def _minibatches(
+    permutation: np.ndarray, batch_size: int, *, drop_last: bool
+) -> Iterator[np.ndarray]:
+    """Yield shuffled indices, optionally excluding the incomplete final batch."""
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive.")
+    stop = len(permutation)
+    if drop_last:
+        stop -= stop % batch_size
+    for start in range(0, stop, batch_size):
+        yield permutation[start : start + batch_size]
+
+
 def train_encoding(encoding: str, split: DataSplit, config: PaperConfig) -> TrainedModel:
     """Train QNN parameters and, where present, encoding parameters jointly with SPSA."""
+    if config.drop_last and len(split.X_train) < config.batch_size:
+        raise ValueError("drop_last requires at least one complete training batch.")
     template = build_qnn_model(encoding, split.X_train[0], layers=config.qnn_layers)
     parameter_count = len(template.parameters)
     rng = np.random.default_rng(config.initialization_seed)
@@ -40,8 +56,9 @@ def train_encoding(encoding: str, split: DataSplit, config: PaperConfig) -> Trai
     evaluation_index = 0
     for epoch in range(config.epochs):
         permutation = rng.permutation(len(split.X_train))
-        for start in range(0, len(permutation), config.batch_size):
-            indices = permutation[start : start + config.batch_size]
+        for indices in _minibatches(
+            permutation, config.batch_size, drop_last=config.drop_last
+        ):
             delta = rng.choice(np.asarray([-1.0, 1.0]), size=parameter_count)
             c_step = config.spsa_c / np.power(1.0 + epoch, 0.101)
             a_step = config.spsa_a / np.power(10.0 + epoch, 0.602)
