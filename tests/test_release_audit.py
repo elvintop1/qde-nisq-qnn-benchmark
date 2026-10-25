@@ -1,3 +1,4 @@
+import csv
 import importlib.util
 from pathlib import Path
 
@@ -29,8 +30,8 @@ def _fixture_file(root: Path, relative: str) -> Path:
 
 def test_release_audit_accepts_only_the_explicit_log_exception(audit_module) -> None:
     module, root, tracked = audit_module
-    tracked.append(_fixture_file(root, "training_logs/log_loss.csv"))
-    assert module.ALLOWED_LOG_FILES == {Path("training_logs/log_loss.csv")}
+    tracked.append(_fixture_file(root, "training_logs/qnn_training_history.csv"))
+    assert module.ALLOWED_LOG_FILES == {Path("training_logs/qnn_training_history.csv")}
     assert module.main() == 0
 
 
@@ -38,6 +39,7 @@ def test_release_audit_accepts_only_the_explicit_log_exception(audit_module) -> 
     "relative",
     [
         "log_loss.csv",
+        "training_logs/log_loss.csv",
         "training_logs/other.csv",
         "training_logs/nested/log_loss.csv",
         "results/log_loss.csv",
@@ -53,6 +55,17 @@ def test_log_exception_still_obeys_file_size_limit(
     audit_module, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     module, root, tracked = audit_module
-    tracked.append(_fixture_file(root, "training_logs/log_loss.csv"))
+    tracked.append(_fixture_file(root, "training_logs/qnn_training_history.csv"))
     monkeypatch.setattr(module, "MAX_SOURCE_SIZE", 1)
     assert module.main() == 1
+
+
+def test_published_log_identifies_test_accuracy_explicitly() -> None:
+    path = ROOT / "training_logs" / "qnn_training_history.csv"
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        assert "test_accuracy" in reader.fieldnames
+        assert "eval_accuracy" not in reader.fieldnames
+        rows = list(reader)
+    assert len(rows) == 720
+    assert all(0 <= float(row["test_accuracy"]) <= 1 for row in rows)

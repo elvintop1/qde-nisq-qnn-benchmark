@@ -1,4 +1,4 @@
-dataset,seed,encoder,encoder_family,epoch,step,train_log_loss,val_log_loss,eval_accuracy,spsa_a_k,spsa_c_k
+dataset,seed,encoder,encoder_family,epoch,step,train_log_loss,val_log_loss,test_accuracy,spsa_a_k,spsa_c_k
 MNIST,1234,Binary basis,Basis/discrete,1,187,0.69923,0.70731,0.5,0.050007,0.1
 MNIST,1234,Binary basis,Basis/discrete,2,374,0.68768,0.70709,0.5,0.047218,0.093239
 MNIST,1234,Binary basis,Basis/discrete,3,561,0.67928,0.70243,0.5,0.044809,0.089497

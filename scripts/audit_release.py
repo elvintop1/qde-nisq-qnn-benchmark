@@ -18,7 +18,7 @@ FORBIDDEN_SUFFIXES = {
     ".log",
 }
 MAX_SOURCE_SIZE = 5 * 1024 * 1024
-ALLOWED_LOG_FILES = {Path("training_logs/log_loss.csv")}
+ALLOWED_LOG_FILES = {Path("training_logs/qnn_training_history.csv")}
 
 
 def tracked_paths() -> list[Path]:
