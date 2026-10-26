@@ -1,4 +1,3 @@
-import csv
 import importlib.util
 from pathlib import Path
 
@@ -28,10 +27,9 @@ def _fixture_file(root: Path, relative: str) -> Path:
     return path
 
 
-def test_release_audit_accepts_only_the_explicit_log_exception(audit_module) -> None:
+def test_release_audit_accepts_learning_curve_image(audit_module) -> None:
     module, root, tracked = audit_module
-    tracked.append(_fixture_file(root, "training_logs/qnn_training_history.csv"))
-    assert module.ALLOWED_LOG_FILES == {Path("training_logs/qnn_training_history.csv")}
+    tracked.append(_fixture_file(root, "training_logs/qnn_learning_curves.png"))
     assert module.main() == 0
 
 
@@ -40,32 +38,27 @@ def test_release_audit_accepts_only_the_explicit_log_exception(audit_module) -> 
     [
         "log_loss.csv",
         "training_logs/log_loss.csv",
+        "training_logs/qnn_training_history.csv",
         "training_logs/other.csv",
         "training_logs/nested/log_loss.csv",
         "results/log_loss.csv",
     ],
 )
-def test_release_audit_rejects_other_result_files(audit_module, relative: str) -> None:
+def test_release_audit_rejects_all_csv_result_files(audit_module, relative: str) -> None:
     module, root, tracked = audit_module
     tracked.append(_fixture_file(root, relative))
     assert module.main() == 1
 
 
-def test_log_exception_still_obeys_file_size_limit(
+def test_learning_curve_image_obeys_file_size_limit(
     audit_module, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     module, root, tracked = audit_module
-    tracked.append(_fixture_file(root, "training_logs/qnn_training_history.csv"))
+    tracked.append(_fixture_file(root, "training_logs/qnn_learning_curves.png"))
     monkeypatch.setattr(module, "MAX_SOURCE_SIZE", 1)
     assert module.main() == 1
 
 
-def test_published_log_identifies_test_accuracy_explicitly() -> None:
-    path = ROOT / "training_logs" / "qnn_training_history.csv"
-    with path.open(newline="") as handle:
-        reader = csv.DictReader(handle)
-        assert "test_accuracy" in reader.fieldnames
-        assert "eval_accuracy" not in reader.fieldnames
-        rows = list(reader)
-    assert len(rows) == 720
-    assert all(0 <= float(row["test_accuracy"]) <= 1 for row in rows)
+def test_published_training_materials_include_only_the_learning_curve_image() -> None:
+    paths = {path.name for path in (ROOT / "training_logs").iterdir() if path.is_file()}
+    assert paths == {"qnn_learning_curves.png"}
